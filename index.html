@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tenis de Lengua Castellana - 5.º de Primaria</title>
+  
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Inter & Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <!-- SheetJS Library for reading/writing Excel files (.xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .font-display {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    @keyframes tennisPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(163, 230, 53, 0.5); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(163, 230, 53, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(163, 230, 53, 0); }
+    }
+    .animate-bounce-ball {
+      animation: bounceBall 1s infinite ease-in-out;
+    }
+    @keyframes bounceBall {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-20px) scale(0.9); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes popupShow {
+      0% { transform: scale(0.5); opacity: 0; }
+      70% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-popup {
+      animation: popupShow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+  </style></head>
+<body class="bg-stone-100 text-stone-800 min-h-screen">
+
+  <!-- Cabecera y navegación principal -->
+  <header class="bg-white border-b border-stone-200 shadow-sm sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3 w-full lg:w-auto">
+        <div class="h-10 w-10 rounded-xl flex items-center justify-center text-xl shadow-md bg-emerald-800">🎾</div>
+        <div>
+          <h1 class="font-display font-bold text-xl text-stone-900 tracking-tight">Tenis de Lengua Castellana</h1>
+          <p class="text-stone-400 text-xs font-medium uppercase font-mono tracking-wider">5.º de Primaria · Juego y editor de preguntas</p>
+        </div>
+      </div>
+
+      <nav class="grid grid-cols-3 gap-2 w-full lg:w-auto" aria-label="Navegación principal">
+        <button id="nav-game" onclick="showPage('game')" class="nav-btn px-3.5 py-2 bg-emerald-800 text-white text-xs font-semibold rounded-lg transition-all shadow-xs cursor-pointer">
+          🎮 Juego
+        </button>
+        <button id="nav-excel" onclick="showPage('excel')" class="nav-btn px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-lg transition-all border border-stone-300 cursor-pointer">
+          📊 Excel
+        </button>
+        <button id="nav-manual" onclick="showPage('manual')" class="nav-btn px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-lg transition-all border border-stone-300 cursor-pointer">
+          ✏️ Editor manual
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto p-4 sm:p-6 pb-16">
+
+    <!-- PÁGINA 1: JUEGO, MARCADOR Y PREGUNTAS -->
+    <section id="page-game" class="app-page">
+      <div class="max-w-4xl mx-auto mb-5">
+        <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-xs">
+          <h2 class="font-display font-bold text-xl text-stone-900">Juego, marcador y preguntas</h2>
+          <p class="text-stone-500 text-xs mt-1">Aquí se desarrolla el partido y aparecen las preguntas del cuestionario.</p>
+        </div>
+      </div>
+      <section id="game-section" class="scroll-mt-24 max-w-4xl mx-auto">
+        <div id="game-arena-root"></div>
+      </section>
+    </section>
+
+    <!-- PÁGINA 2: IMPORTAR / EXPORTAR EXCEL -->
+    <section id="page-excel" class="app-page hidden">
+      <section id="excel-section" class="scroll-mt-24 max-w-4xl mx-auto">
+        <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-xs">
+          <div class="mb-5">
+            <span class="inline-flex px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold uppercase tracking-wider">Gestión de archivos</span>
+            <h2 class="font-display font-bold text-xl text-stone-900 mt-3">Importar / Exportar mediante Excel</h2>
+            <p class="text-stone-500 text-xs mt-1">Carga un Excel con tus preguntas o exporta el cuestionario actual.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <button onclick="downloadExcelTemplate()" class="flex items-center justify-center gap-2 border border-emerald-300 hover:bg-emerald-50 text-emerald-800 text-xs font-bold py-3 px-4 rounded-xl transition-all cursor-pointer">
+              📥 Descargar plantilla Excel (.xlsx)
+            </button>
+            <button onclick="exportQuestionsToExcel()" class="flex items-center justify-center gap-2 border border-stone-300 hover:bg-stone-100 text-stone-700 text-xs font-bold py-3 px-4 rounded-xl transition-all cursor-pointer">
+              📤 Exportar preguntas actuales (.xlsx)
+            </button>
+          </div>
+
+          <div id="drop-zone" class="border-2 border-dashed border-stone-300 hover:border-emerald-500 hover:bg-stone-50/50 rounded-xl p-8 text-center cursor-pointer transition-all" onclick="triggerFileInput()">
+            <input type="file" id="excel-file-input" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleFileSelect(event)">
+            <div class="text-3xl mb-2">📊</div>
+            <p class="text-stone-800 text-sm font-semibold">Arrastra tu archivo Excel aquí o haz clic para subir</p>
+            <p class="text-stone-400 text-xs mt-1">Soporta formatos estándar .xlsx, .xls y .csv</p>
+          </div>
+
+          <div id="alert-container" class="mt-3 hidden"></div>
+        </div>
+      </section>
+    </section>
+
+    <!-- PÁGINA 3: EDITOR MANUAL -->
+    <section id="page-manual" class="app-page hidden">
+      <section id="manual-section" class="scroll-mt-24 max-w-6xl mx-auto">
+        <div class="bg-white border border-stone-200 rounded-2xl shadow-xs overflow-hidden">
+          <div class="p-5 bg-stone-50 border-b border-stone-200 flex flex-wrap justify-between items-center gap-3">
+            <div>
+              <span class="inline-flex px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 border border-stone-200 text-[10px] font-bold uppercase tracking-wider mb-2">Edición directa</span>
+              <h2 class="font-display font-bold text-xl text-stone-900">Editor Manual de Preguntas</h2>
+              <p class="text-stone-500 text-xs mt-1">Modifica preguntas y respuestas directamente en la tabla.</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="addNewManualQuestion()" class="px-3 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-lg cursor-pointer transition-all shadow-xs">+ Añadir Pregunta</button>
+              <button onclick="clearAllQuestions()" class="px-3 py-2 bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-bold rounded-lg cursor-pointer transition-all">Vaciar Todo</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-stone-100 text-stone-500 uppercase tracking-wider font-mono border-b border-stone-200">
+                  <th class="p-3 font-semibold min-w-[260px]">Pregunta</th>
+                  <th class="p-3 font-semibold text-emerald-800 bg-emerald-50/50 min-w-[180px]">R. Correcta</th>
+                  <th class="p-3 font-semibold min-w-[160px]">Incorrecta 1</th>
+                  <th class="p-3 font-semibold min-w-[160px]">Incorrecta 2</th>
+                  <th class="p-3 text-center font-semibold w-12">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="questions-table-body" class="divide-y divide-stone-100"></tbody>
+            </table>
+          </div>
+
+          <div class="p-4 bg-stone-50 border-t border-stone-100 text-[10px] text-stone-400 flex flex-wrap gap-3 justify-between items-center font-mono">
+            <span id="registered-questions-badge">Total de preguntas: 0</span>
+            <button onclick="restoreDefaultQuestions()" class="text-stone-500 hover:text-emerald-800 underline uppercase font-bold">Cargar preguntas por defecto</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+  </main>
+
+  <script>
+    // --- QUESTION STORAGE ENGINE ---
+    const DEFAULT_QUESTIONS = [
+      {"id": "1", "question": "En la oración «El perro corre por el parque», ¿qué palabra es un sustantivo?", "correctAnswer": "perro", "answer2": "corre", "answer3": "por"},
+      {"id": "2", "question": "En «La casa grande tiene jardín», ¿qué palabra es un adjetivo?", "correctAnswer": "grande", "answer2": "casa", "answer3": "tiene"},
+      {"id": "3", "question": "En «María canta una canción», ¿qué palabra es el verbo?", "correctAnswer": "canta", "answer2": "María", "answer3": "canción"},
+      {"id": "4", "question": "En «El niño camina lentamente», ¿qué palabra es un adverbio?", "correctAnswer": "lentamente", "answer2": "niño", "answer3": "camina"},
+      {"id": "5", "question": "¿Cuál de estas palabras es un sustantivo?", "correctAnswer": "montaña", "answer2": "bonito", "answer3": "saltar"},
+      {"id": "6", "question": "¿Cuál de estas palabras es un adjetivo?", "correctAnswer": "rápido", "answer2": "mesa", "answer3": "comer"},
+      {"id": "7", "question": "¿Cuál de estas palabras es un verbo?", "correctAnswer": "escribir", "answer2": "cuaderno", "answer3": "alegre"},
+      {"id": "8", "question": "En «Los pájaros pequeños vuelan alto», ¿qué palabra funciona como adjetivo?", "correctAnswer": "pequeños", "answer2": "pájaros", "answer3": "alto"},
+      {"id": "9", "question": "En «Ayer visitamos el museo», ¿qué palabra es un adverbio de tiempo?", "correctAnswer": "Ayer", "answer2": "visitamos", "answer3": "museo"},
+      {"id": "10", "question": "En «Mi hermana preparó una deliciosa tarta», ¿qué palabra es el sustantivo que nombra un alimento?", "correctAnswer": "tarta", "answer2": "deliciosa", "answer3": "preparó"},
+      {"id": "11", "question": "En «Pedro respondió correctamente a la pregunta», ¿qué palabra indica cómo respondió Pedro?", "correctAnswer": "correctamente", "answer2": "respondió", "answer3": "pregunta"},
+      {"id": "12", "question": "¿Qué opción contiene, en este orden, un sustantivo, un adjetivo y un verbo?", "correctAnswer": "bosque - verde - crecer", "answer2": "verde - bosque - crecer", "answer3": "crecer - verde - bosque"},
+      {"id": "13", "question": "En «Mañana los alumnos responsables entregarán cuidadosamente sus trabajos», ¿qué palabra es un adverbio de modo?", "correctAnswer": "cuidadosamente", "answer2": "Mañana", "answer3": "responsables"},
+      {"id": "14", "question": "En «La veloz atleta corrió rápidamente», ¿qué pareja está formada por un adjetivo y un adverbio, en ese orden?", "correctAnswer": "veloz - rápidamente", "answer2": "atleta - corrió", "answer3": "rápidamente - veloz"},
+      {"id": "15", "question": "En «Ayer el viejo reloj sonó inesperadamente», ¿qué clasificación de «viejo», «sonó» e «inesperadamente» es correcta?", "correctAnswer": "adjetivo - verbo - adverbio", "answer2": "sustantivo - adjetivo - verbo", "answer3": "verbo - sustantivo - adjetivo"}
+    ];
+
+    let questionsList = JSON.parse(localStorage.getItem('lengua5_questions_v1')) || [...DEFAULT_QUESTIONS];
+
+    // --- GAME ENGINE STATE ---
+    let matchStarted = false;
+    let isFinished = false;
+    let currentQuestionIndex = 0;
+    let selectedAnswer = null;
+    let isAnswered = false;
+    let isCorrect = null;
+    let answersShuffled = [];
+    let muteSound = false;
+
+    // Streaks
+    let correctStreak = 0;   // 3 corrects in a row = User Point
+    let incorrectStreak = 0; // 2 incorrects in a row = CPU Point
+
+    // Scorecard structure
+    let score = {
+      userPoints: '0',
+      computerPoints: '0',
+      userGames: 0,
+      computerGames: 0,
+      userSets: 0,
+      computerSets: 0,
+      setHistory: []
+    };
+
+    // User answered log history
+    let answersHistory = [];
+    let lastEventText = "¡Bienvenidos a la gran final de tenis de campo!";
+
+    // Play Beeps with Web Audio API
+    function playBeep(type) {
+      if (muteSound) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        if (type === 'correct') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+          osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+          gain.gain.setValueAtTime(0.1, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.35);
+        } else if (type === 'incorrect') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(220, ctx.currentTime); // A3
+          osc.frequency.setValueAtTime(147, ctx.currentTime + 0.12); // D3
+          gain.gain.setValueAtTime(0.12, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.4);
+        } else if (type === 'point-won') {
+          const frequencies = [523.25, 659.25, 783.99, 1046.50];
+          const now = ctx.currentTime;
+          frequencies.forEach((f, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(f, now + i * 0.08);
+            gain.gain.setValueAtTime(0.08, now + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.25);
+          });
+        } else if (type === 'game-over') {
+          const frequencies = [783.99, 659.25, 523.25, 392.00];
+          const now = ctx.currentTime;
+          frequencies.forEach((f, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(f, now + i * 0.15);
+            gain.gain.setValueAtTime(0.08, now + i * 0.15);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.4);
+            osc.start(now + i * 0.15);
+            osc.stop(now + i * 0.15 + 0.4);
+          });
+        }
+      } catch (e) {
+        console.warn("Audio Context blocked: ", e);
+      }
+    }
+
+    // Initialize UI on load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderGameArena();
+      renderQuestionsTable();
+      setupDragAndDrop();
+    });
+
+    function showPage(page) {
+      const pages = ['game', 'excel', 'manual'];
+      pages.forEach(name => {
+        const section = document.getElementById(`page-${name}`);
+        const button = document.getElementById(`nav-${name}`);
+        if (section) section.classList.toggle('hidden', name !== page);
+        if (button) {
+          const active = name === page;
+          button.classList.toggle('bg-emerald-800', active);
+          button.classList.toggle('text-white', active);
+          button.classList.toggle('bg-stone-100', !active);
+          button.classList.toggle('text-stone-700', !active);
+          button.classList.toggle('border', !active);
+          button.classList.toggle('border-stone-300', !active);
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function scrollToEl(id) {
+      if (id === 'game-section') showPage('game');
+      else if (id === 'excel-section') showPage('excel');
+      else if (id === 'manual-section') showPage('manual');
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+
+    // --- GAME ENGINE ACTIONS ---
+    function startMatchGame() {
+      score = {
+        userPoints: '0',
+        computerPoints: '0',
+        userGames: 0,
+        computerGames: 0,
+        userSets: 0,
+        computerSets: 0,
+        setHistory: []
+      };
+      correctStreak = 0;
+      incorrectStreak = 0;
+      currentQuestionIndex = 0;
+      isFinished = false;
+      selectedAnswer = null;
+      isAnswered = false;
+      isCorrect = null;
+      answersHistory = [];
+      lastEventText = "¡Comienza el encuentro! Saque inicial a cargo del Usuario.";
+      matchStarted = true;
+
+      prepareShuffledAnswersForCurrentQuestion();
+      renderGameArena();
+    }
+
+    function prepareShuffledAnswersForCurrentQuestion() {
+      if (questionsList.length === 0) return;
+      const q = questionsList[currentQuestionIndex];
+      const pool = [q.correctAnswer, q.answer2, q.answer3].filter(Boolean);
+      
+      // Traditional Shuffle Array index
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      answersShuffled = pool;
+    }
+
+    // Advancing standard tennis scoring algorithm
+    function advanceTennisPoint(winner) {
+      let { userPoints, computerPoints, userGames, computerGames, userSets, computerSets, setHistory } = score;
+
+      if (winner === 'user') {
+        if (userPoints === '0') userPoints = '1';
+        else if (userPoints === '1') userPoints = '2';
+        else if (userPoints === '2') userPoints = '3';
+        else if (userPoints === '3') {
+          if (computerPoints === 'Ad') computerPoints = '3';
+          else if (computerPoints === '3') userPoints = 'Ad';
+          else {
+            userGames++;
+            userPoints = '0'; computerPoints = '0';
+          }
+        } else if (userPoints === 'Ad') {
+          userGames++;
+          userPoints = '0'; computerPoints = '0';
+        }
+      } else {
+        if (computerPoints === '0') computerPoints = '1';
+        else if (computerPoints === '1') computerPoints = '2';
+        else if (computerPoints === '2') computerPoints = '3';
+        else if (computerPoints === '3') {
+          if (userPoints === 'Ad') userPoints = '3';
+          else if (userPoints === '3') computerPoints = 'Ad';
+          else {
+            computerGames++;
+            userPoints = '0'; computerPoints = '0';
+          }
+        } else if (computerPoints === 'Ad') {
+          computerGames++;
+          userPoints = '0'; computerPoints = '0';
+        }
+      }
+
+      // Sets validation
+      if (userGames >= 6 && (userGames - computerGames >= 2)) {
+        userSets++;
+        setHistory.push({ user: userGames, computer: computerGames });
+        userGames = 0; computerGames = 0;
+      } else if (computerGames >= 6 && (computerGames - userGames >= 2)) {
+        computerSets++;
+        setHistory.push({ user: userGames, computer: computerGames });
+        userGames = 0; computerGames = 0;
+      } else if (userGames === 7 && computerGames === 6) {
+        userSets++;
+        setHistory.push({ user: 7, computer: 6 });
+        userGames = 0; computerGames = 0;
+      } else if (computerGames === 7 && userGames === 6) {
+        computerSets++;
+        setHistory.push({ user: 6, computer: 7 });
+        userGames = 0; computerGames = 0;
+      }
+
+      score = { userPoints, computerPoints, userGames, computerGames, userSets, computerSets, setHistory };
+    }
+
+    function handleSelectOption(option) {
+      if (isAnswered || isFinished) return;
+      
+      const q = questionsList[currentQuestionIndex];
+      const correctOption = q.correctAnswer;
+      isCorrect = (option === correctOption);
+      selectedAnswer = option;
+      isAnswered = true;
+
+      let pointWinner = null;
+      let feedText = "";
+
+      if (isCorrect) {
+        playBeep('correct');
+        correctStreak++;
+        incorrectStreak = 0;
+        feedText = "🔥 ¡Correcto! Gran derecha cruzada lanzada con precisión. ";
+
+        if (correctStreak >= 3) {
+          pointWinner = 'user';
+          correctStreak = 0;
+          feedText += " 🏆 ¡Has ganado el punto tras enhebrar 3 correctas consecutivas!";
+        } else {
+          feedText += `Racha del usuario: ${correctStreak}/3 aciertos para un punto.`;
+        }
+      } else {
+        playBeep('incorrect');
+        incorrectStreak++;
+        correctStreak = 0;
+        feedText = "💦 ¡Golpe ancho! Tu bola golpeó la red y quedó fuera de la línea. ";
+
+        if (incorrectStreak >= 2) {
+          pointWinner = 'computer';
+          incorrectStreak = 0;
+          feedText += " 🤖 Punto para el Computador debido a fallas seguidas del jugador.";
+        } else {
+          feedText += `La respuesta correcta era "${correctOption}". ¡Mejora la racha! (Racha fallos: ${incorrectStreak}/2).`;
+        }
+      }
+
+      lastEventText = feedText;
+
+      if (pointWinner) {
+        playBeep('point-won');
+        advanceTennisPoint(pointWinner);
+      }
+
+      answersHistory.push({
+        question: q.question,
+        userAns: option,
+        corrAns: correctOption,
+        isCorrect: isCorrect,
+        pointAwarded: pointWinner
+      });
+
+      renderGameArena();
+      showAnswerModal(isCorrect, q.correctAnswer, pointWinner);
+    }
+
+    function showAnswerModal(correct, exactAnswer, winner) {
+      const overlay = document.getElementById("game-overlay-container");
+      if (!overlay) return;
+
+      // Build content inside overlay
+      let html = "";
+      if (correct) {
+        html = `
+          <div class="bg-white border-t-8 border-lime-500 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl animate-popup space-y-4">
+            <div class="text-5xl animate-bounce-ball mt-2">🏆</div>
+            <h3 class="font-display font-extrabold text-2xl text-emerald-900 tracking-tight">¡SÚPER BIEN HECHO!</h3>
+            <p class="text-stone-500 text-xs px-2 leading-relaxed">Golpe perfecto desde el fondo del court. ¡Has respondido correctamente esta pregunta!</p>
+            
+            <div class="bg-lime-50 rounded-lg p-3 border border-lime-200">
+              <span class="text-[9px] text-lime-800 font-mono font-bold block uppercase tracking-wider">RESPUESTA REGISTRADA</span>
+              <p class="text-sm font-semibold text-stone-800">${exactAnswer}</p>
+            </div>
+
+            ${winner === 'user' ? `
+              <div class="bg-emerald-800 text-white rounded-lg p-2.5 text-xs font-mono font-bold">
+                🎉 ¡RACHA CONSOLIDADA! +1 PUNTO DE TENIS
+              </div>
+            ` : ''}
+
+            <button onclick="dismissActionModal()" class="w-full py-3 bg-emerald-800 hover:bg-emerald-950 text-white font-bold text-xs rounded-xl shadow-md tracking-wider uppercase transition-all">
+              Continuar al Siguiente Saque 🎾
+            </button>
+          </div>
+        `;
+      } else {
+        html = `
+          <div class="bg-white border-t-8 border-rose-500 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl animate-popup space-y-4">
+            <div class="text-5xl animate-bounce-ball mt-2">❌</div>
+            <h3 class="font-display font-extrabold text-2xl text-rose-800 tracking-tight">¡GOLPE ERRADO!</h3>
+            <p class="text-stone-500 text-xs px-2 leading-relaxed">Tu bola se ha ido fuera de los límites marcados del court de juego.</p>
+            
+            <div class="bg-rose-50 rounded-lg p-3 border border-rose-150">
+              <span class="text-[9px] text-rose-800 font-mono font-bold block uppercase tracking-wider">LA RESPUESTA CORRECTA ERA:</span>
+              <p class="text-sm font-semibold text-stone-850">${exactAnswer}</p>
+            </div>
+
+            ${winner === 'computer' ? `
+              <div class="bg-stone-900 text-lime-400 rounded-lg p-2.5 text-xs font-mono font-bold">
+                🤖 ¡CPU RECLAMA EL PUNTO POR ACUMULACIÓN!
+              </div>
+            ` : ''}
+
+            <button onclick="dismissActionModal()" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md tracking-wider uppercase transition-all">
+              Asimilar y Continuar 🎾
+            </button>
+          </div>
+        `;
+      }
+
+      overlay.innerHTML = html;
+      overlay.classList.remove("hidden");
+      overlay.classList.add("flex");
+    }
+
+    function dismissActionModal() {
+      const overlay = document.getElementById("game-overlay-container");
+      if (overlay) {
+        overlay.classList.add("hidden");
+        overlay.classList.remove("flex");
+      }
+
+      // Progress to next question
+      currentQuestionIndex++;
+      const finishedMatch = currentQuestionIndex >= questionsList.length;
+
+      if (finishedMatch) {
+         playBeep('game-over');
+         isFinished = true;
+         renderGameArena();
+      } else {
+        isAnswered = false;
+        selectedAnswer = null;
+        isCorrect = null;
+        prepareShuffledAnswersForCurrentQuestion();
+        renderGameArena();
+      }
+    }
+
+    function getWinnerMatchDetails() {
+      if (score.userSets > score.computerSets) {
+        return { name: "Usuario", isUser: true, text: `Dominio absoluto por sets de ${score.userSets} - ${score.computerSets}` };
+      } else if (score.computerSets > score.userSets) {
+        return { name: "Computador", isUser: false, text: `La máquina se corona con ${score.computerSets} sets a ${score.userSets}` };
+      }
+      
+      const totalUserG = score.userGames + (score.setHistory.reduce((acc, s) => acc + s.user, 0));
+      const totalCpuG = score.computerGames + (score.setHistory.reduce((acc, s) => acc + s.computer, 0));
+
+      if (totalUserG > totalCpuG) {
+        return { name: "Usuario", isUser: true, text: `Vencedor por juegos ganados en total (${totalUserG} - ${totalCpuG})` };
+      } else if (totalCpuG > totalUserG) {
+        return { name: "Computador", isUser: false, text: `Computador vence por juegos acumulados (${totalCpuG} - ${totalUserG})` };
+      }
+
+      return { name: "Empate técnico de Leyenda", isUser: true, text: "Fuerzas totalmente homologadas en la cancha" };
+    }
+
+    // --- DOM RENDERING FOR THE MATCH ---
+    function renderGameArena() {
+      const container = document.getElementById("game-arena-root");
+      if (!container) return;
+
+      if (questionsList.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white border border-stone-200 rounded-3xl p-8 text-center space-y-4 shadow-sm">
+            <span class="text-4xl text-stone-300 block">📭</span>
+            <h3 class="font-display font-semibold text-lg text-stone-850">Sin preguntas en el temario</h3>
+            <p class="text-stone-400 text-xs max-w-sm mx-auto">Vuelve abajo al editor de preguntas para cargar o escribir algunas preguntas válidas que permitan jugar.</p>
+            <button onclick="restoreDefaultQuestions()" class="px-5 py-2 bg-emerald-800 hover:bg-emerald-950 text-white text-xs font-bold rounded-lg cursor-pointer">
+              Cargar preguntas por defecto
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // VIEW 1: PRE-MATCH LOBBY / LOUNGE
+      if (!matchStarted) {
+        container.innerHTML = `
+          <div class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden animate-fade-in">
+            <div class="bg-emerald-900 text-white p-8 text-center relative">
+              <span class="inline-block py-1 px-3 bg-emerald-950 border border-emerald-700/60 rounded-full text-[10px] text-lime-400 font-bold tracking-wider uppercase mb-3">CONTRINCANTE DE ENTRENAMIENTO</span>
+              <h2 class="font-display font-bold text-2xl mb-2">Simulador de Tenis de Mesa y Court</h2>
+              <p class="text-emerald-200/90 text-xs leading-relaxed max-w-sm mx-auto">Pon a prueba tus conocimientos de Lengua Castellana de 5.º de Primaria. ¡Responde sobre sustantivos, adjetivos, verbos y adverbios para ganar el partido!</p>
+            </div>
+            <div class="p-6 space-y-4">
+              <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs space-y-2">
+                <p class="font-bold text-stone-800">🎖️ Regulación del encuentro:</p>
+                <div class="flex gap-2.5 items-start text-[11px] text-stone-500">
+                  <span class="bg-emerald-105 text-emerald-900 h-5 w-5 rounded-full font-bold flex items-center justify-center shrink-0 bg-emerald-100">3</span>
+                  <span><strong>Aciertos Seguidos:</strong> Conceden 1 punto en tu casillero del marcador de tenis (0 &rarr; 15 &rarr; 30 &rarr; 40 &rarr; Juego).</span>
+                </div>
+                <div class="flex gap-2.5 items-start text-[11px] text-stone-500">
+                  <span class="bg-rose-100 text-rose-900 h-5 w-5 rounded-full font-bold flex items-center justify-center shrink-0">2</span>
+                  <span><strong>Fallos Consecutivos:</strong> Entregan directamente un punto de tenis al Computador.</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-2">
+                <div>
+                  <span class="text-[10px] text-stone-400 font-mono block">PREGUNTAS CARGADAS</span>
+                  <span class="font-bold text-stone-800 text-sm">${questionsList.length} preguntas listas</span>
+                </div>
+                <button onclick="startMatchGame()" class="flex items-center gap-1.5 px-6 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm rounded-xl select-none cursor-pointer transition-all active:scale-95 animate-tennis-pulse">
+                  🎾 ¡Sacar y Jugar!
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // VIEW 2: POST-MATCH RESULTS PRESENTATION
+      if (isFinished) {
+        const winner = getWinnerMatchDetails();
+        const totalQ = answersHistory.length;
+        const correctQ = answersHistory.filter(h => h.isCorrect).length;
+        const accuracy = totalQ > 0 ? Math.round((correctQ / totalQ) * 100) : 0;
+
+        // Render set history badges
+        let setHistoryHTML = "";
+        if (score.setHistory.length > 0) {
+          setHistoryHTML = score.setHistory.map((s, idx) => `
+            <div class="bg-stone-100 p-2 rounded-lg font-mono text-center text-xs px-3">
+              <span class="text-[8px] text-stone-400 block font-bold">SET ${idx+1}</span>
+              <span class="font-bold text-stone-800">${s.user} - ${s.computer}</span>
+            </div>
+          `).join('');
+        }
+
+        container.innerHTML = `
+          <div class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden animate-fade-in">
+            <div class="bg-stone-900 text-white p-8 text-center space-y-2">
+              <span class="text-3xl">🏆</span>
+              <h2 class="font-display font-bold text-2xl tracking-tight">¡Partido Finalizado!</h2>
+              <p class="text-stone-400 text-xs uppercase font-mono tracking-widest">Ceremonia de Premiación del Slam</p>
+            </div>
+            <div class="p-6 space-y-6">
+              <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-center space-y-1">
+                <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block">CAMPEÓN DEL ENCUENTRO</span>
+                <h3 class="text-xl font-display font-bold text-emerald-950">${winner.name}</h3>
+                <p class="text-emerald-700 text-xs font-mono">${winner.text}</p>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="border border-stone-200 rounded-xl p-4 space-y-2">
+                  <span class="text-[10px] text-stone-400 font-mono font-bold block uppercase">Marcador Final por Sets</span>
+                  <div class="space-y-1.5">
+                    <div class="flex justify-between items-center text-xs bg-stone-50 p-2 rounded">
+                      <span class="font-bold text-stone-805 flex items-center gap-1 text-stone-800">🙋‍♂️ Usuario ${winner.isUser ? '⭐' : ''}</span>
+                      <span class="font-mono bg-emerald-100 text-emerald-900 font-bold px-2 py-0.5 rounded">Sets: ${score.userSets} | Games: ${score.userGames}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs bg-stone-50 p-2 rounded">
+                      <span class="font-semibold text-stone-800 flex items-center gap-1">🤖 Computador ${!winner.isUser ? '⭐' : ''}</span>
+                      <span class="font-mono bg-stone-200 text-stone-800 font-bold px-2 py-0.5 rounded">Sets: ${score.computerSets} | Games: ${score.computerGames}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="border border-stone-200 rounded-xl p-4 flex flex-col justify-between">
+                  <span class="text-[10px] text-stone-400 font-mono font-bold block uppercase">Estadísticas Técnicas</span>
+                  <div class="grid grid-cols-2 gap-2 mt-2 text-center">
+                    <div class="bg-stone-50 p-2.5 rounded-lg">
+                      <span class="text-lg font-bold text-stone-900 block">${accuracy}%</span>
+                      <span class="text-[9px] text-stone-500 block uppercase font-mono">Precisión</span>
+                    </div>
+                    <div class="bg-stone-50 p-2.5 rounded-lg">
+                      <span class="text-lg font-bold text-stone-900 block">${correctQ} / ${totalQ}</span>
+                      <span class="text-[9px] text-stone-500 block uppercase font-mono">Preguntas</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              ${score.setHistory.length > 0 ? `
+                <div class="space-y-1.5">
+                  <span class="text-[10px] text-stone-400 font-mono block uppercase text-left">Parciales de sets completados:</span>
+                  <div class="flex gap-2">
+                    ${setHistoryHTML}
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- Bottom CTA -->
+              <div class="flex gap-3 pt-3 border-t border-stone-100">
+                <button onclick="matchStarted = false; renderGameArena(); scrollToEl('excel-section')" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs py-2.5 rounded-xl transition-all text-center">
+                  Cargar/Editar Preguntas
+                </button>
+                <button onclick="startMatchGame()" class="flex-1 bg-emerald-800 hover:bg-emerald-950 text-white font-bold text-xs py-2.5 rounded-xl transition-all text-center">
+                  ¡Jugar Revancha!
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // VIEW 3: ACTIVE PLAY BOARD WITH SPLIT SIDE PANELS
+      const activeQuestion = questionsList[currentQuestionIndex];
+      const pointsTextMap = { '0': '0', '1': '15', '2': '30', '3': '40', 'Ad': 'Ventaja' };
+
+      // Highlight active score block
+      const userDisplayPoints = pointsTextMap[score.userPoints] || score.userPoints;
+      const cpuDisplayPoints = pointsTextMap[score.computerPoints] || score.computerPoints;
+
+      // Make options templates
+      let optionsHTML = answersShuffled.map(opt => {
+        return `
+          <button 
+            onclick="handleSelectOption('${opt.replace(/'/g, "\\'")}')" 
+            class="w-full text-left p-3.5 px-4 bg-stone-50 hover:bg-emerald-50 hover:border-emerald-300 border border-stone-200 rounded-xl text-xs font-semibold text-stone-800 transition-all active:scale-[0.98] select-none block cursor-pointer"
+          >
+            ${opt}
+          </button>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          
+          <!-- ACTIVE QUESTION INPUT CONTAINER CARD -->
+          <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-xs space-y-3.5 relative overflow-hidden">
+            <span class="absolute top-0 right-0 py-1 px-3 bg-stone-100 text-stone-500 rounded-bl-xl text-[9px] font-mono font-bold uppercase uppercase">SAQUE ACTIVO</span>
+            
+            <div class="space-y-1">
+              <span class="text-[10px] text-emerald-800 font-mono font-bold uppercase tracking-wide">Saque número ${currentQuestionIndex + 1}</span>
+              <h3 class="font-display font-bold text-[15px] text-stone-900 pr-12 leading-snug">${activeQuestion.question}</h3>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2.5 pt-1">
+              ${optionsHTML}
+            </div>
+          </div>
+
+          <!-- RACHA / ESTADO SIN PISTA VERDE -->
+          <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-[11px] font-bold text-stone-700">
+                  <span>RACHA DE ACIERTOS (3 = PUNTO)</span>
+                  <span class="font-mono text-emerald-700">${correctStreak}/3</span>
+                </div>
+                <div class="flex gap-2">
+                  ${[0, 1, 2].map(idx => {
+                    const active = correctStreak > idx;
+                    return `
+                      <div class="h-7 flex-1 rounded-lg border flex items-center justify-center text-xs font-bold ${
+                        active
+                          ? 'bg-lime-100 border-lime-400 text-emerald-900'
+                          : 'bg-stone-50 border-stone-200 text-stone-300'
+                      }">
+                        ${active ? '✓' : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-[11px] font-bold text-stone-700">
+                  <span>RACHA DE FALLOS (2 = PTO CPU)</span>
+                  <span class="font-mono text-rose-600">${incorrectStreak}/2</span>
+                </div>
+                <div class="flex gap-2">
+                  ${[0, 1].map(idx => {
+                    const active = incorrectStreak > idx;
+                    return `
+                      <div class="h-7 flex-1 rounded-lg border flex items-center justify-center text-xs font-bold ${
+                        active
+                          ? 'bg-rose-100 border-rose-400 text-rose-800'
+                          : 'bg-stone-50 border-stone-200 text-stone-300'
+                      }">
+                        ${active ? '✗' : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+
+
+          <!-- LED DIVISION SCOREBOARD: SPLIT IN TWO SIDEWAYS -->
+          <div class="bg-stone-950 text-white rounded-2xl p-5 shadow-lg border border-stone-800 relative">
+            
+            <div class="flex items-center justify-between border-b border-stone-800 pb-3 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
+                <span class="font-mono text-stone-400 text-[10px] tracking-wider font-extrabold uppercase flex items-center">LOCAL EN VIVO</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <button 
+                  onclick="toggleMuteSound()" 
+                  class="text-[10px] uppercase font-mono tracking-wider bg-stone-900 border border-stone-800 hover:border-stone-700 px-2.5 py-1 rounded text-stone-450 hover:text-white transition-all cursor-pointer"
+                >
+                  ${muteSound ? '🔇 Sin Sonido' : '🔊 Con Sonido'}
+                </button>
+                <span class="bg-stone-900 px-2 py-0.5 rounded font-mono text-[10px] text-lime-400">
+                  SAQUE: ${currentQuestionIndex + 1} / ${questionsList.length}
+                </span>
+              </div>
+            </div>
+
+            <!-- SCORE CARD COLUMNS (LEFT / RIGHT) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <!-- LEFT BOARD: USER PLAYER -->
+              <div class="flex items-center justify-between bg-stone-900/60 p-4 border border-stone-800 rounded-xl">
+                <div>
+                  <span class="font-display font-medium text-lime-400 text-xs block tracking-widest uppercase">Marcador</span>
+                  <span class="text-white font-bold text-lg block">🙋‍♂️ Usuario (Tú)</span>
+                  <div class="flex items-center gap-2 mt-1 text-xs text-stone-400 font-mono">
+                    <span>Sets: <strong class="text-white">${score.userSets}</strong></span>
+                    <span>•</span>
+                    <span>Games: <strong class="text-white">${score.userGames}</strong></span>
+                  </div>
+                </div>
+                <!-- LED points visual -->
+                <div class="bg-emerald-950/80 border border-emerald-800 text-lime-400 text-2xl font-bold font-mono px-4 py-2 rounded-lg shadow-inner min-w-[4rem] text-center">
+                  ${userDisplayPoints}
+                </div>
+              </div>
+
+              <!-- RIGHT BOARD: COMPUTER PLAYER -->
+              <div class="flex items-center justify-between bg-stone-900/60 p-4 border border-stone-800 rounded-xl">
+                <div>
+                  <span class="font-display font-medium text-stone-400 text-xs block tracking-widest uppercase text-stone-400">Marcador</span>
+                  <span class="text-white font-bold text-lg block font-mono">🤖 Computador</span>
+                  <div class="flex items-center gap-2 mt-1 text-xs text-stone-400 font-mono">
+                    <span>Sets: <strong class="text-white">${score.computerSets}</strong></span>
+                    <span>•</span>
+                    <span>Games: <strong class="text-white">${score.computerGames}</strong></span>
+                  </div>
+                </div>
+                <!-- LED points visual -->
+                <div class="border border-stone-800 text-stone-300 text-2xl font-bold font-mono px-4 py-2 rounded-lg shadow-inner min-w-[4rem] text-center" style="background-color: #202020;">
+                  ${cpuDisplayPoints}
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Commentator event visual log -->
+            <div class="mt-3.5 bg-stone-900 p-2.5 px-3 border border-stone-850 text-[10px] font-mono text-stone-300 rounded flex gap-2">
+              <span class="text-lime-400 uppercase tracking-widest shrink-0 font-bold">[COMENTARISTA LIVE]:</span>
+              <span class="truncate" id="commentary-bar">${lastEventText}</span>
+            </div>
+
+          </div>
+
+
+
+        </div>
+
+        <!-- HIDDEN FLOATING ACTION MODAL OVERLAY -->
+        <div 
+          id="game-overlay-container" 
+          class="fixed inset-0 bg-stone-950/70 z-50 p-4 transition-all hidden items-center justify-center backdrop-blur-xs"
+        ></div>
+      `;
+    }
+
+    function toggleMuteSound() {
+      muteSound = !muteSound;
+      renderGameArena();
+    }
+
+
+    // --- MANUAL QUESTIONS INTERACTIVE EDITOR ---
+    function renderQuestionsTable() {
+      const tbody = document.getElementById("questions-table-body");
+      if (!tbody) return;
+
+      if (questionsList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="p-8 text-center text-stone-400 italic">No hay preguntas cargadas en tu cuestionario local.</td>
+          </tr>
+        `;
+        document.getElementById("registered-questions-badge").textContent = "Total de preguntas: 0";
+        return;
+      }
+
+      tbody.innerHTML = questionsList.map((q, idx) => `
+        <tr class="hover:bg-stone-50/50 transition-all">
+          <td class="p-2">
+            <input 
+              type="text" 
+              value="${q.question.replace(/"/g, '&quot;')}" 
+              placeholder="Ej. ¿Cuántos sets compone un Grand slam?"
+              onchange="changeQuestionCell('${q.id}', 'question', this.value)"
+              class="bg-stone-50/40 border border-stone-200 focus:bg-white focus:border-stone-400 p-2 py-1.5 rounded-lg w-full text-xs font-semibold outline-none"
+            >
+          </td>
+          <td class="p-2 bg-emerald-50/10">
+            <input 
+              type="text" 
+              value="${q.correctAnswer.replace(/"/g, '&quot;')}" 
+              placeholder="Respuesta correcta"
+              onchange="changeQuestionCell('${q.id}', 'correctAnswer', this.value)"
+              class="bg-emerald-50/5 border border-emerald-200 focus:bg-white focus:border-emerald-600 p-2 py-1.5 rounded-lg w-full text-xs font-bold text-emerald-950 outline-none"
+            >
+          </td>
+          <td class="p-2">
+            <input 
+              type="text" 
+              value="${q.answer2.replace(/"/g, '&quot;')}" 
+              placeholder="Opción fallida 1"
+              onchange="changeQuestionCell('${q.id}', 'answer2', this.value)"
+              class="bg-stone-50/30 border border-stone-200 focus:bg-white focus:border-stone-400 p-2 py-1.5 rounded-lg w-full text-xs text-stone-600 outline-none"
+            >
+          </td>
+          <td class="p-2">
+            <input 
+              type="text" 
+              value="${q.answer3.replace(/"/g, '&quot;')}" 
+              placeholder="Opción fallida 2"
+              onchange="changeQuestionCell('${q.id}', 'answer3', this.value)"
+              class="bg-stone-50/30 border border-stone-200 focus:bg-white focus:border-stone-400 p-2 py-1.5 rounded-lg w-full text-xs text-stone-600 outline-none"
+            >
+          </td>
+          <td class="p-2 text-center">
+            <button onclick="deleteManualQuestionRow('${q.id}')" class="p-1 px-2 hover:bg-rose-100 rounded text-rose-600 font-bold transition-colors cursor-pointer" title="Eliminar pregunta">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById("registered-questions-badge").textContent = `Total de preguntas: ${questionsList.length}`;
+    }
+
+    function changeQuestionCell(id, field, value) {
+      questionsList = questionsList.map(q => {
+        if (q.id === id) {
+          return { ...q, [field]: value.trim() };
+        }
+        return q;
+      });
+      syncWithLocalStorage();
+    }
+
+    function deleteManualQuestionRow(id) {
+      questionsList = questionsList.filter(q => q.id !== id);
+      syncWithLocalStorage();
+      renderQuestionsTable();
+      if (!isAnswered) {
+        // Redraw games in real time
+        renderGameArena();
+      }
+    }
+
+    function addNewManualQuestion() {
+      const newQ = {
+        id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 4),
+        question: '',
+        correctAnswer: '',
+        answer2: '',
+        answer3: ''
+      };
+      questionsList.push(newQ);
+      syncWithLocalStorage();
+      renderQuestionsTable();
+    }
+
+    function clearAllQuestions() {
+      if (confirm("¿Seguro que deseas vaciar todas las preguntas del temario?")) {
+        questionsList = [];
+        syncWithLocalStorage();
+        renderQuestionsTable();
+        renderGameArena();
+      }
+    }
+
+    function restoreDefaultQuestions() {
+      if (confirm("¿Deseas restaurar el catálogo predeterminado de preguntas de tenis?")) {
+        questionsList = [...DEFAULT_QUESTIONS];
+        syncWithLocalStorage();
+        renderQuestionsTable();
+        renderGameArena();
+      }
+    }
+
+    function syncWithLocalStorage() {
+      localStorage.setItem('lengua5_questions_v1', JSON.stringify(questionsList));
+    }
+
+
+    // --- EXCEL SHEET OPERATIONS WITH SHEETJS ---
+    function triggerFileInput() {
+      document.getElementById('excel-file-input').click();
+    }
+
+    function setupDragAndDrop() {
+      const dropZone = document.getElementById("drop-zone");
+      if (!dropZone) return;
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add("border-emerald-500", "bg-emerald-50/50");
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove("border-emerald-500", "bg-emerald-50/50");
+        }, false);
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files[0]) {
+          processExcelFile(files[0]);
+        }
+      }, false);
+    }
+
+    function handleFileSelect(e) {
+      if (e.target.files && e.target.files[0]) {
+        processExcelFile(e.target.files[0]);
+      }
+    }
+
+    function processExcelFile(file) {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          if (workbook.SheetNames.length === 0) {
+            showNotifyAlert("Error: El archivo no tiene hojas de cálculo.", true);
+            return;
+          }
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          if (!jsonData || jsonData.length === 0) {
+            showNotifyAlert("La hoja de cálculo seleccionada está totalmente vacía.", true);
+            return;
+          }
+
+          let headerRowIndex = -1;
+          let qIndex = -1;
+          let rCorrectIndex = -1;
+
+          // Scan the first 10 rows for a valid header row containing 'pregunta' and 'correcta/respuesta'
+          const scanLimit = Math.min(10, jsonData.length);
+          for (let r = 0; r < scanLimit; r++) {
+            const row = jsonData[r];
+            if (!row) continue;
+            
+            const headers = row.map(cell => (cell === null || cell === undefined) ? '' : String(cell).toLowerCase().trim());
+            const tempQ = headers.findIndex(h => /pregunta|question|consulta|enunciado|cuestion/i.test(h));
+            const tempCorrect = headers.findIndex(h => /correcta|correct|verdad|respuesta|buena|solucion|solución/i.test(h));
+            
+            if (tempQ !== -1 && tempCorrect !== -1) {
+              headerRowIndex = r;
+              qIndex = tempQ;
+              rCorrectIndex = tempCorrect;
+              break;
+            }
+          }
+
+          let startIndex = 0;
+          let finalQIndex = 0;
+          let finalCorrectIndex = 1;
+          let wrongIndices = [2, 3];
+
+          if (headerRowIndex !== -1) {
+            startIndex = headerRowIndex + 1;
+            finalQIndex = qIndex;
+            finalCorrectIndex = rCorrectIndex;
+            
+            // Collect other columns for wrong options
+            wrongIndices = [];
+            const row = jsonData[headerRowIndex];
+            for (let colIdx = 0; colIdx < row.length; colIdx++) {
+              if (colIdx !== finalQIndex && colIdx !== finalCorrectIndex) {
+                wrongIndices.push(colIdx);
+              }
+            }
+          }
+
+          const parsedQuestions = [];
+          for (let i = startIndex; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            if (!row || row.length === 0) continue;
+
+            const getCellStr = (colIdx) => {
+              if (colIdx === undefined || colIdx < 0 || colIdx >= row.length) return '';
+              const val = row[colIdx];
+              if (val === null || val === undefined) return '';
+              return String(val).trim();
+            };
+
+            const qText = getCellStr(finalQIndex);
+            const corrAns = getCellStr(finalCorrectIndex);
+
+            // Skip completely empty rows
+            if (!qText && !corrAns) continue;
+
+            const wrong1 = wrongIndices[0] !== undefined ? getCellStr(wrongIndices[0]) : '';
+            const wrong2 = wrongIndices[1] !== undefined ? getCellStr(wrongIndices[1]) : '';
+
+            parsedQuestions.push({
+              id: Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substr(2, 4),
+              question: qText || "Pregunta sin texto",
+              correctAnswer: corrAns || "Respuesta por definir",
+              answer2: wrong1 || "Opción de prueba A",
+              answer3: wrong2 || "Opción de prueba B"
+            });
+          }
+
+          if (parsedQuestions.length === 0) {
+            showNotifyAlert("No se detectaron preguntas válidas. Verifica que las columnas 'Pregunta' y 'Respuesta Correcta' estén presentes en tu archivo.", true);
+          } else {
+            questionsList = parsedQuestions;
+            syncWithLocalStorage();
+            renderQuestionsTable();
+            renderGameArena();
+            showNotifyAlert(`¡Éxito! Se han cargado ${parsedQuestions.length} preguntas desde tu archivo Excel de forma rápida.`, false);
+          }
+        } catch(err) {
+          showNotifyAlert("Ocurrió un error al procesar el archivo Excel. Asegúrate de que tiene extensión .xlsx o .csv válidos y contiene las columnas esperadas.", true);
+        }
+      };
+      
+      reader.readAsArrayBuffer(file);
+    }
+
+    function showNotifyAlert(text, isError) {
+      const container = document.getElementById("alert-container");
+      if (!container) return;
+
+      container.className = `mt-4 p-3.5 border rounded-xl text-xs font-semibold flex items-center gap-2 ${
+        isError ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-150 text-emerald-800'
+      }`;
+      container.innerHTML = `${isError ? '⚠️' : '🎉'} ${text}`;
+      container.classList.remove("hidden");
+
+      setTimeout(() => {
+        container.classList.add("hidden");
+      }, 7000);
+    }
+
+    function downloadExcelTemplate() {
+      try {
+        const wb = XLSX.utils.book_new();
+        const headers = ["Pregunta", "Respuesta Correcta", "Opción Incorrecta 1", "Opción Incorrecta 2"];
+        const sampleRows = [
+          ["¿Cuántas cuerdas posee aproximadamente una raqueta de tenis profesional?", "De 16 a 19 cuerdas", "Más de 30 cuerdas", "De 8 a 10 cuerdas"],
+          ["¿Cuál es la altura reglamentaria de la red de tenis en los postes del court?", "1.07 metros", "1.50 metros", "0.90 metros"],
+          ["¿Qué país se coronó campeón de la Copa Davis del 2019?", "España", "Canadá", "Francia"],
+          ["¿Cuántos minutos de descanso se permiten tradicionalmente entre cambios de lado?", "90 segundos", "5 minutos", "10 segundos"]
+        ];
+        const wsData = [headers, ...sampleRows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws['!cols'] = [{ wch: 45 }, { wch: 30 }, { wch: 25 }, { wch: 25 }];
+        XLSX.utils.book_append_sheet(wb, ws, "Preguntas");
+        XLSX.writeFile(wb, "Plantilla_Preguntas_Tenis.xlsx");
+        showNotifyAlert("Plantilla base descargada correctamente como 'Plantilla_Preguntas_Tenis.xlsx'.", false);
+      } catch(e) {
+        showNotifyAlert("No se pudo generar la plantilla Excel, verifica tu navegador.", true);
+      }
+    }
+
+    function exportQuestionsToExcel() {
+      if (questionsList.length === 0) {
+        showNotifyAlert("No hay preguntas registradas actualmente para exportar.", true);
+        return;
+      }
+      try {
+        const wb = XLSX.utils.book_new();
+        const headers = ["Pregunta", "Respuesta Correcta", "Opción Incorrecta 1", "Opción Incorrecta 2"];
+        const rows = questionsList.map(q => [q.question, q.correctAnswer, q.answer2, q.answer3]);
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws['!cols'] = [{ wch: 45 }, { wch: 30 }, { wch: 25 }, { wch: 25 }];
+        XLSX.utils.book_append_sheet(wb, ws, "Preguntas");
+        XLSX.writeFile(wb, "preguntas_tenis_exportadas.xlsx");
+        showNotifyAlert("Preguntas exportadas perfectamente con el nombre 'preguntas_tenis_exportadas.xlsx'!", false);
+      } catch(e) {
+        showNotifyAlert("Error al exportar, revisa compatibilidades.", true);
+      }
+    }
+
+  </script>
+
+</body>
+</html>
